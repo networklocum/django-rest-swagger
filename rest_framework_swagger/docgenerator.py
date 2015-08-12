@@ -234,6 +234,7 @@ class DocumentationGenerator(object):
         for api in apis:
             introspector = self.get_introspector(api, apis)
             for method_introspector in introspector:
+
                 serializer = self._get_method_serializer(method_introspector)
                 if serializer is not None:
                     serializers.add(serializer)
@@ -260,6 +261,11 @@ class DocumentationGenerator(object):
             fields = serializer().get_fields()
             for name, field in fields.items():
                 if isinstance(field, BaseSerializer):
+                    try:
+                        if "Circular" in str(serializer):
+                            continue
+                    except:
+                        pass
                     serializers_set.add(get_thing(field, lambda f: f))
                     if field not in found_serializers:
                         serializers_set.update(
@@ -341,7 +347,7 @@ class DocumentationGenerator(object):
                     f['enum'] = [k for k, v in field.choices]
                 elif isinstance(field.choices, dict):
                     f['enum'] = [k for k, v in field.choices.items()]
-
+            
             # Support for complex types
             if rest_framework.VERSION < '3.0.0':
                 has_many = hasattr(field, 'many') and field.many
@@ -350,6 +356,7 @@ class DocumentationGenerator(object):
                 has_many = isinstance(field, (ListSerializer, ManyRelatedField))
 
             if isinstance(field, BaseSerializer) or has_many:
+                
                 if isinstance(field, BaseSerializer):
                     field_serializer = IntrospectorHelper.get_serializer_name(field)
 
